@@ -44,19 +44,31 @@ pipeline {
         }
 
         stage('Deploy to Lambda') {
-            steps {
-                script {
-                    // Terraform apply to deploy Lambda function
-                    dir('terraform') {
-                        sh 'terraform init'
-                        withCredentials([aws(credentialsId: '888958595564')]) {
-                          sh 'terraform plan'
-                          sh 'terraform apply -auto-approve'
+    steps {
+        script {
+            // Terraform apply to deploy Lambda function
+            dir('terraform') {
+                sh 'terraform init'
+                
+                // Check if the ECR repository exists
+                def repoExists = sh(
+                    script: "aws ecr describe-repositories --repository-names saitechnicaltask || echo 'NOT_FOUND'",
+                    returnStdout: true
+                ).trim()
 
-                        }
-                    }
+                // If the repository exists, import it into Terraform
+                if (repoExists.contains('repositoryUri')) {
+                    sh 'terraform import aws_ecr_repository.saitechnicaltask saitechnicaltask'
+                }
+
+                withCredentials([aws(credentialsId: '888958595564')]) {
+                    sh 'terraform plan'
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
+    }
+}
+
     }
 }
