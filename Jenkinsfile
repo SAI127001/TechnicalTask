@@ -49,7 +49,8 @@ pipeline {
                     // Terraform apply to deploy Lambda function
                     dir('terraform') {
                         sh 'terraform init'
-                        sh 'terraform apply -auto-approve -var="aws_account_id=888958595564"'
+                        sh 'terraform plan'
+                        sh 'terraform apply -auto-approve'
                     }
                 }
             }
