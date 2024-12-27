@@ -1,50 +1,63 @@
-pipeline {
-    agent any
+provider "aws" {
+  region = "us-east-1"
+}
 
-    environment {
-        AWS_DEFAULT_REGION = 'us-east-1'
-        ECR_REPO = 'saitechnicaltask'
-        IMAGE_TAG = 'latest'
-        DOCKER_REGISTRY_CREDENTIAL = 'your-docker-registry-credentials'
-    }
+resource "aws_ecr_repository" "saitechnicaltask" {
+  name = "saitechnicaltask"
+}
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/your-repo/s3-to-rds-glue.git'
-            }
+resource "aws_iam_role" "lambda_role" {
+  name = "lambda_execution_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "lambda.amazonaws.com"
         }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${ECR_REPO}:${IMAGE_TAG}")
-                }
-            }
+      }
+    ]
+  })
+
+  inline_policy {
+    name   = "lambda_policy"
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ]
+          Effect   = "Allow"
+          Resource = "arn:aws:logs:*:*:*"
+        },
+        {
+          Action = [
+            "s3:GetObject",
+            "rds:*",
+            "glue:*"
+          ]
+          Effect   = "Allow"
+          Resource = "*"
         }
-        stage('Push Docker Image to ECR') {
-            steps {
-                script {
-                    docker.withRegistry('https://<aws-account-id>.dkr.ecr.us-east-1.amazonaws.com', DOCKER_REGISTRY_CREDENTIAL) {
-                        docker.image("${ECR_REPO}:${IMAGE_TAG}").push()
-                    }
-                }
-            }
-        }
-        stage('Deploy to AWS') {
-            steps {
-                withAWS(credentials: 'your-aws-credentials') {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
-                }
-            }
-        }
-        stage('Test Lambda Function') {
-            steps {
-                script {
-                    sh 'aws lambda invoke --function-name s3-to-rds-glue-function output.txt'
-                    sh 'cat output.txt'
-                }
-            }
-        }
-    }
+      ]
+    })
+  }
+}
+
+resource "aws_lambda_function" "saitechnicaltask" {
+  function_name = "saitechnicaltask"
+  role          = aws_iam_role.lambda_role.arn
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.saitechnicaltask.repository_url}:latest"
+  timeout       = 60
+}
+
+output "lambda_function_name" {
+  value = aws_lambda_function.saitechnicaltask.function_name
 }

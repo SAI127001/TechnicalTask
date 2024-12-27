@@ -1,29 +1,56 @@
 pipeline {
     agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'
+        ECR_REPOSITORY_NAME = 'saitechnicaltask'
+        DOCKER_IMAGE = 'saitechnicaltask'
+        AWS_ACCOUNT_ID = '<your-aws-account-id>'
+    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/SAI127001/TechnicalTask.git'
+                git 'https://github.com/SAI127001/TechnicalTask'
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t saitechnicaltask .'
+                script {
+                    dockerImage = docker.build("${env.DOCKER_IMAGE}")
+                }
             }
         }
-        stage('Push to ECR') {
+
+        stage('Login to AWS ECR') {
             steps {
-                sh '''
-                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your_account_id>.dkr.ecr.us-east-1.amazonaws.com
-                docker tag s3-to-rds:latest <your_account_id>.dkr.ecr.us-east-1.amazonaws.com/s3-to-rds:latest
-                docker push <your_account_id>.dkr.ecr.us-east-1.amazonaws.com/s3-to-rds:latest
-                '''
+                script {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                        sh 'aws ecr get-login-password --region ${env.AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_DEFAULT_REGION}.amazonaws.com'
+                    }
+                }
             }
         }
-        stage('Terraform Apply') {
+
+        stage('Push Docker Image to ECR') {
             steps {
-                sh 'terraform init'
-                sh 'terraform apply -auto-approve'
+                script {
+                    sh "docker tag ${env.DOCKER_IMAGE}:latest ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_DEFAULT_REGION}.amazonaws.com/${env.ECR_REPOSITORY_NAME}:latest"
+                    sh "docker push ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_DEFAULT_REGION}.amazonaws.com/${env.ECR_REPOSITORY_NAME}:latest"
+                }
+            }
+        }
+
+        stage('Deploy to Lambda') {
+            steps {
+                script {
+                    // Terraform apply to deploy Lambda function
+                    dir('terraform') {
+                        sh 'terraform init'
+                        sh 'terraform apply -auto-approve'
+                    }
+                }
             }
         }
     }
