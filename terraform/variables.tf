@@ -1,5 +1,5 @@
 variable "aws_account_id" {
-  description = "AWS Account ID"
+  description = "888958595564"
   type        = string
 }
 
