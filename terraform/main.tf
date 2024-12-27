@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_ecr_repository" "saitechnicaltask" {
-  name = "saitechnicaltask"
+  name = "saitechnicaltask1"
 }
 
 resource "aws_iam_role" "lambda_role" {
