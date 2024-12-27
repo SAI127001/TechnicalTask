@@ -2,8 +2,8 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_ecr_repository" "saitechnicaltask1" {
-  name = "saitechnicaltask1"
+resource "aws_ecr_repository" "saitechnicaltask" {
+  name = "saitechnicaltask"
 }
 
 resource "aws_iam_role" "lambda_role" {
@@ -52,14 +52,14 @@ resource "aws_iam_role_policy" "lambda_policy" {
 }
 
 
-resource "aws_lambda_function" "saitechnicaltask1" {
-  function_name = "saitechnicaltask1"
+resource "aws_lambda_function" "saitechnicaltask" {
+  function_name = "saitechnicaltask"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.saitechnicaltask1.repository_url}:latest"
+  image_uri     = "${aws_ecr_repository.saitechnicaltask.repository_url}:latest"
   timeout       = 60
 }
 
 output "lambda_function_name" {
-  value = aws_lambda_function.saitechnicaltask1.function_name
+  value = aws_lambda_function.saitechnicaltask.function_name
 }
