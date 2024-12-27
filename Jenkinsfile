@@ -5,7 +5,7 @@ pipeline {
         AWS_DEFAULT_REGION = 'us-east-1'
         ECR_REPOSITORY_NAME = 'saitechnicaltask'
         DOCKER_IMAGE = 'saitechnicaltask'
-        AWS_ACCOUNT_ID = '<your-aws-account-id>'
+        AWS_ACCOUNT_ID = '888958595564'
     }
 
     stages {
