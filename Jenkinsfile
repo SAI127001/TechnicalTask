@@ -55,20 +55,14 @@ pipeline {
                     script: "aws ecr describe-repositories --repository-names saitechnicaltask || echo 'NOT_FOUND'",
                     returnStdout: true
                 ).trim()
-
-                // If the repository exists, import it into Terraform
                 if (repoExists.contains('repositoryUri')) {
                     echo "ECR repository already exists. Importing into Terraform state."
                     sh 'terraform import aws_ecr_repository.saitechnicaltask saitechnicaltask'
                 } else {
                     echo "ECR repository does not exist. Proceeding with creation in Terraform."
                 }
-
-                // Proceed with Terraform plan and apply
                 withCredentials([aws(credentialsId: '888958595564')]) {
-                    sh 'terraform destroy -target=aws_lambda_function.saitechnicaltask'
                     sh 'terraform plan'
-                    sh 'terraform apply -auto-approve'
                 }
             }
         }
