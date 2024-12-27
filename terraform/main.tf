@@ -1,14 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"  # Specify the required version of the AWS provider
-    }
-  }
-
-  required_version = ">= 0.13"  # Ensure compatibility with Terraform 0.13+
-}
-
 provider "aws" {
   region = "us-east-1"
 }
@@ -61,6 +50,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
+
 
 resource "aws_lambda_function" "saitechnicaltask" {
   function_name = "saitechnicaltask"
