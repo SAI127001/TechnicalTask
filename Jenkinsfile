@@ -49,8 +49,11 @@ pipeline {
                     // Terraform apply to deploy Lambda function
                     dir('terraform') {
                         sh 'terraform init'
-                        sh 'terraform plan'
-                        sh 'terraform apply -auto-approve'
+                        withCredentials([aws(credentialsId: 'your-credentials-id')]) {
+                          sh 'terraform plan'
+                          sh 'terraform apply -auto-approve'
+
+                        }
                     }
                 }
             }
