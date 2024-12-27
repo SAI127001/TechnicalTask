@@ -66,6 +66,7 @@ pipeline {
 
                 // Proceed with Terraform plan and apply
                 withCredentials([aws(credentialsId: '888958595564')]) {
+                    sh 'terraform destroy -target=aws_lambda_function.saitechnicaltask'
                     sh 'terraform plan'
                     sh 'terraform apply -auto-approve'
                 }
